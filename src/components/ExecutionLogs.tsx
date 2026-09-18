@@ -10,10 +10,13 @@ import {
   ChevronDown,
   ChevronRight,
   Terminal,
+  ScrollText,
+  BarChart3,
 } from 'lucide-react';
+import { ChartPreview } from './ChartPreview';
 
 export function ExecutionLogs() {
-  const { executions } = usePipelineStore();
+  const { executions, chartData, chartType } = usePipelineStore();
   const [expandedExec, setExpandedExec] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'history' | 'live'>('history');
 
@@ -76,7 +79,9 @@ export function ExecutionLogs() {
           <div className="space-y-3">
             {executions.length === 0 ? (
               <div className="text-center py-16">
-                <div className="text-6xl mb-4">📋</div>
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-slate-100 rounded-2xl flex items-center justify-center">
+                  <ScrollText size={32} className="text-gray-400" />
+                </div>
                 <h3 className="text-lg font-semibold text-gray-600 mb-2">
                   No executions yet
                 </h3>
@@ -194,6 +199,21 @@ export function ExecutionLogs() {
                                 </tbody>
                               </table>
                             </div>
+                          </div>
+                        )}
+
+                        {/* Chart Preview */}
+                        {chartData && chartType && execution.status === 'success' && (
+                          <div className="px-5 py-4 border-t border-gray-100">
+                            <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                              <BarChart3 size={12} />
+                              Generated Chart
+                            </h5>
+                            <ChartPreview
+                              data={chartData}
+                              chartType={chartType}
+                              title={`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`}
+                            />
                           </div>
                         )}
                       </div>

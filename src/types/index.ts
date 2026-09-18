@@ -38,7 +38,8 @@ export interface NodeDefinition {
   type: string;
   label: string;
   category: NodeCategory;
-  icon: string;
+  iconName: string; // Lucide icon name
+  color: string; // Tailwind color class
   description: string;
   configFields: ConfigField[];
 }
@@ -50,16 +51,4 @@ export interface ConfigField {
   options?: string[];
   defaultValue?: any;
   placeholder?: string;
-}
-
-export interface PipelineNode {
-  id: string;
-  type: string;
-  data: {
-    label: string;
-    config: Record<string, any>;
-    status?: 'idle' | 'running' | 'success' | 'error';
-    outputPreview?: any[];
-  };
-  position: { x: number; y: number };
 }

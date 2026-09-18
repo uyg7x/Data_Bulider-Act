@@ -1,9 +1,9 @@
 import { NODE_DEFINITIONS } from '../store/pipelineStore';
 import { usePipelineStore } from '../store/pipelineStore';
-import { useAppStore } from '../store/appStore';
 import { v4 as uuidv4 } from 'uuid';
 import { Database, Wrench, Send, Search } from 'lucide-react';
 import { useState } from 'react';
+import { NodeIcon } from '../utils/icons';
 
 const categoryIcons = {
   data_sources: Database,
@@ -19,7 +19,6 @@ const categoryLabels = {
 
 export function Sidebar() {
   const { setCurrentNodes, currentNodes } = usePipelineStore();
-  const { selectedPipelineId } = useAppStore();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredNodes = NODE_DEFINITIONS.filter(
@@ -95,10 +94,12 @@ export function Sidebar() {
                     draggable
                     onDragStart={(e) => handleDragStart(e, node.type)}
                     onClick={() => handleAddNode(node.type)}
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg cursor-grab active:cursor-grabbing transition-all group"
+                    className="flex items-center gap-2.5 px-3 py-2.5 bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 rounded-lg cursor-grab active:cursor-grabbing transition-all group"
                     title={node.description}
                   >
-                    <span className="text-lg">{node.icon}</span>
+                    <div className={`w-8 h-8 rounded-md ${node.color} flex items-center justify-center flex-shrink-0`}>
+                      <NodeIcon name={node.iconName} size={16} className="text-white" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-700 group-hover:text-blue-700">
                         {node.label}

@@ -20,6 +20,7 @@ import 'reactflow/dist/style.css';
 import { usePipelineStore, NODE_DEFINITIONS } from '../../store/pipelineStore';
 import CustomNode from './CustomNode';
 import { v4 as uuidv4 } from 'uuid';
+import { Workflow } from 'lucide-react';
 
 const nodeTypes = {
   pipelineNode: CustomNode,
@@ -191,7 +192,9 @@ function FlowCanvas() {
         {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
-              <div className="text-6xl mb-4">🔧</div>
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center">
+                <Workflow size={32} className="text-blue-500" />
+              </div>
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
                 Build Your Pipeline
               </h3>

@@ -2,13 +2,14 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import { Pipeline, Execution, LogEntry, NodeDefinition } from '../types';
 
-// Node definitions
+// Node definitions - using Lucide icon names and colors instead of emojis
 export const NODE_DEFINITIONS: NodeDefinition[] = [
   {
     type: 'load_csv',
     label: 'Load CSV',
     category: 'data_sources',
-    icon: '📁',
+    iconName: 'FileUp',
+    color: 'bg-blue-500',
     description: 'Load data from a CSV file',
     configFields: [
       { name: 'fileName', label: 'File Name', type: 'text', placeholder: 'data.csv' },
@@ -20,7 +21,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'load_db',
     label: 'Load Database',
     category: 'data_sources',
-    icon: '🗄️',
+    iconName: 'Database',
+    color: 'bg-indigo-500',
     description: 'Load data from a database query',
     configFields: [
       { name: 'query', label: 'SQL Query', type: 'text', placeholder: 'SELECT * FROM table' },
@@ -31,7 +33,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'filter_nulls',
     label: 'Filter Nulls',
     category: 'transformations',
-    icon: '🧹',
+    iconName: 'Eraser',
+    color: 'bg-amber-500',
     description: 'Remove or fill null values',
     configFields: [
       { name: 'column', label: 'Target Column', type: 'text', placeholder: 'column_name' },
@@ -42,7 +45,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'rename_columns',
     label: 'Rename Columns',
     category: 'transformations',
-    icon: '✏️',
+    iconName: 'Type',
+    color: 'bg-purple-500',
     description: 'Rename data columns',
     configFields: [
       { name: 'oldName', label: 'Old Name', type: 'text', placeholder: 'old_column' },
@@ -53,7 +57,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'math_operation',
     label: 'Math Operation',
     category: 'transformations',
-    icon: '🔢',
+    iconName: 'Calculator',
+    color: 'bg-pink-500',
     description: 'Perform mathematical operations',
     configFields: [
       { name: 'operation', label: 'Operation', type: 'select', options: ['add', 'subtract', 'multiply', 'divide'], defaultValue: 'add' },
@@ -66,7 +71,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'filter_rows',
     label: 'Filter Rows',
     category: 'transformations',
-    icon: '🔍',
+    iconName: 'Filter',
+    color: 'bg-orange-500',
     description: 'Filter rows based on conditions',
     configFields: [
       { name: 'column', label: 'Column', type: 'text', placeholder: 'column_name' },
@@ -78,7 +84,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'sort_data',
     label: 'Sort Data',
     category: 'transformations',
-    icon: '📊',
+    iconName: 'ArrowUpDown',
+    color: 'bg-teal-500',
     description: 'Sort data by column',
     configFields: [
       { name: 'column', label: 'Sort Column', type: 'text', placeholder: 'column_name' },
@@ -89,19 +96,22 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'generate_chart',
     label: 'Generate Chart',
     category: 'outputs',
-    icon: '📈',
+    iconName: 'BarChart3',
+    color: 'bg-emerald-500',
     description: 'Create a visualization chart',
     configFields: [
-      { name: 'chartType', label: 'Chart Type', type: 'select', options: ['bar', 'line', 'pie', 'scatter'], defaultValue: 'bar' },
+      { name: 'chartType', label: 'Chart Type', type: 'select', options: ['bar', 'line', 'pie', 'scatter', 'area'], defaultValue: 'bar' },
       { name: 'xAxis', label: 'X-Axis Column', type: 'text', placeholder: 'x_column' },
       { name: 'yAxis', label: 'Y-Axis Column', type: 'text', placeholder: 'y_column' },
+      { name: 'title', label: 'Chart Title', type: 'text', placeholder: 'My Chart' },
     ],
   },
   {
     type: 'export_csv',
     label: 'Export CSV',
     category: 'outputs',
-    icon: '💾',
+    iconName: 'Download',
+    color: 'bg-cyan-500',
     description: 'Export data as CSV file',
     configFields: [
       { name: 'fileName', label: 'Output File Name', type: 'text', placeholder: 'output.csv' },
@@ -112,7 +122,8 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
     type: 'export_json',
     label: 'Export JSON',
     category: 'outputs',
-    icon: '📋',
+    iconName: 'FileJson',
+    color: 'bg-slate-500',
     description: 'Export data as JSON file',
     configFields: [
       { name: 'fileName', label: 'Output File Name', type: 'text', placeholder: 'output.json' },
@@ -136,6 +147,29 @@ const generateSampleData = () => {
   }));
 };
 
+// Generate chart data from sample data
+const generateChartData = (chartType: string, xAxis: string, yAxis: string) => {
+  const data = generateSampleData();
+  const xCol = xAxis || 'name';
+  const yCol = yAxis || 'salary';
+
+  if (chartType === 'pie') {
+    // Aggregate for pie chart
+    const grouped: Record<string, number> = {};
+    data.forEach((row: any) => {
+      const key = String(row[xCol] || 'Unknown');
+      grouped[key] = (grouped[key] || 0) + Number(row[yCol] || 0);
+    });
+    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
+  }
+
+  return data.map((row: any) => ({
+    name: String(row[xCol] || row.name),
+    value: Number(row[yCol] || row.salary),
+    ...row,
+  }));
+};
+
 interface PipelineState {
   pipelines: Pipeline[];
   executions: Execution[];
@@ -143,6 +177,8 @@ interface PipelineState {
   currentEdges: any[];
   selectedNodeId: string | null;
   isExecuting: boolean;
+  chartData: any[] | null;
+  chartType: string | null;
   
   // Actions
   createPipeline: (name: string) => string;
@@ -154,6 +190,7 @@ interface PipelineState {
   updateNodeConfig: (nodeId: string, config: Record<string, any>) => void;
   executePipeline: (pipelineId: string) => Promise<void>;
   loadPipeline: (id: string) => void;
+  setChartData: (data: any[] | null, type: string | null) => void;
 }
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({
@@ -216,6 +253,8 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   currentEdges: [],
   selectedNodeId: null,
   isExecuting: false,
+  chartData: null,
+  chartType: null,
 
   createPipeline: (name: string) => {
     const id = uuidv4();
@@ -248,6 +287,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   setCurrentNodes: (nodes: any[]) => set({ currentNodes: nodes }),
   setCurrentEdges: (edges: any[]) => set({ currentEdges: edges }),
   setSelectedNodeId: (id: string | null) => set({ selectedNodeId: id }),
+  setChartData: (data, type) => set({ chartData: data, chartType: type }),
 
   updateNodeConfig: (nodeId: string, config: Record<string, any>) => {
     set((state) => ({
@@ -270,11 +310,11 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   },
 
   executePipeline: async (pipelineId: string) => {
-    const { currentNodes, currentEdges } = get();
+    const { currentNodes } = get();
     
     if (currentNodes.length === 0) return;
 
-    set({ isExecuting: true });
+    set({ isExecuting: true, chartData: null, chartType: null });
 
     // Reset all node statuses
     set((state) => ({
@@ -328,7 +368,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
           message = `Filtered nulls: removed ${removed} rows, ${currentData.length} remaining`;
           break;
         case 'rename_columns':
-          message = `Renamed column "${node.data.config?.oldName}" → "${node.data.config?.newName}"`;
+          message = `Renamed column "${node.data.config?.oldName}" to "${node.data.config?.newName}"`;
           break;
         case 'math_operation':
           message = `Applied ${node.data.config?.operation} on ${node.data.config?.columnA} and ${node.data.config?.columnB}`;
@@ -336,19 +376,25 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         case 'filter_rows':
           const filteredCount = currentData.length;
           currentData = currentData.filter(() => Math.random() > 0.2);
-          message = `Filtered rows: ${filteredCount} → ${currentData.length} rows`;
+          message = `Filtered rows: ${filteredCount} to ${currentData.length} rows`;
           break;
         case 'sort_data':
           message = `Sorted by "${node.data.config?.column}" (${node.data.config?.order || 'ascending'})`;
           break;
-        case 'generate_chart':
-          message = `Generated ${node.data.config?.chartType || 'bar'} chart`;
+        case 'generate_chart': {
+          const chartType = node.data.config?.chartType || 'bar';
+          const xAxis = node.data.config?.xAxis || 'name';
+          const yAxis = node.data.config?.yAxis || 'salary';
+          const chartData = generateChartData(chartType, xAxis, yAxis);
+          set({ chartData, chartType });
+          message = `Generated ${chartType} chart with ${chartData.length} data points`;
           break;
+        }
         case 'export_csv':
-          message = `Exported CSV: ${currentData.length} rows → ${node.data.config?.fileName || 'output.csv'}`;
+          message = `Exported CSV: ${currentData.length} rows to ${node.data.config?.fileName || 'output.csv'}`;
           break;
         case 'export_json':
-          message = `Exported JSON: ${currentData.length} rows → ${node.data.config?.fileName || 'output.json'}`;
+          message = `Exported JSON: ${currentData.length} rows to ${node.data.config?.fileName || 'output.json'}`;
           break;
         default:
           message = `Processed node: ${nodeDef?.label || nodeType}`;

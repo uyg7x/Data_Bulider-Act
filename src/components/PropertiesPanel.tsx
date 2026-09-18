@@ -1,8 +1,10 @@
 import { usePipelineStore, NODE_DEFINITIONS } from '../store/pipelineStore';
-import { Settings, Trash2, Info } from 'lucide-react';
+import { Settings, Trash2, Info, Table } from 'lucide-react';
+import { NodeIcon } from '../utils/icons';
+import { ChartPreview } from './ChartPreview';
 
 export function PropertiesPanel() {
-  const { currentNodes, selectedNodeId, setSelectedNodeId, updateNodeConfig, setCurrentNodes, currentEdges, setCurrentEdges } = usePipelineStore();
+  const { currentNodes, selectedNodeId, setSelectedNodeId, updateNodeConfig, setCurrentNodes, currentEdges, setCurrentEdges, chartData, chartType } = usePipelineStore();
 
   const selectedNode = currentNodes.find((n) => n.id === selectedNodeId);
   const nodeDef = selectedNode
@@ -37,8 +39,10 @@ export function PropertiesPanel() {
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">{nodeDef?.icon}</span>
+          <div className="flex items-center gap-2.5">
+            <div className={`w-8 h-8 rounded-md ${nodeDef?.color || 'bg-gray-400'} flex items-center justify-center flex-shrink-0`}>
+              <NodeIcon name={nodeDef?.iconName || 'Box'} size={16} className="text-white" />
+            </div>
             <div>
               <h3 className="font-semibold text-sm text-gray-800">
                 {selectedNode.data.label}
@@ -145,11 +149,28 @@ export function PropertiesPanel() {
           </div>
         </div>
 
+        {/* Chart Preview for generate_chart nodes */}
+        {selectedNode.data.nodeType === 'generate_chart' && chartData && chartType && (
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Info size={14} className="text-gray-500" />
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Chart Preview
+              </span>
+            </div>
+            <ChartPreview
+              data={chartData}
+              chartType={chartType}
+              title={selectedNode.data.config?.title || 'Generated Chart'}
+            />
+          </div>
+        )}
+
         {/* Data Preview */}
         {selectedNode.data.outputPreview && selectedNode.data.outputPreview.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-100">
             <div className="flex items-center gap-2 mb-2">
-              <Info size={14} className="text-gray-500" />
+              <Table size={14} className="text-gray-500" />
               <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                 Data Preview
               </span>

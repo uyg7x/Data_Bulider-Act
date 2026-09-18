@@ -1,6 +1,8 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from 'reactflow';
 import { NODE_DEFINITIONS } from '../../store/pipelineStore';
+import { NodeIcon } from '../../utils/icons';
+import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 type NodeStatus = 'idle' | 'running' | 'success' | 'error';
 
@@ -11,17 +13,22 @@ const statusColors: Record<string, string> = {
   error: 'border-red-400 bg-red-50',
 };
 
-const statusIcons: Record<string, string> = {
-  idle: '',
-  running: '⏳',
-  success: '✅',
-  error: '❌',
-};
+function StatusIndicator({ status }: { status: NodeStatus }) {
+  switch (status) {
+    case 'running':
+      return <Loader2 size={14} className="text-blue-500 animate-spin" />;
+    case 'success':
+      return <CheckCircle2 size={14} className="text-green-500" />;
+    case 'error':
+      return <XCircle size={14} className="text-red-500" />;
+    default:
+      return null;
+  }
+}
 
 function CustomNode({ data, selected }: NodeProps) {
   const nodeDef = NODE_DEFINITIONS.find((n: any) => n.type === data.nodeType);
   const status: NodeStatus = data.status || 'idle';
-  const icon = nodeDef?.icon || '📦';
 
   return (
     <div
@@ -35,10 +42,12 @@ function CustomNode({ data, selected }: NodeProps) {
         className="!w-3 !h-3 !bg-gray-400 !border-2 !border-white"
       />
       
-      <div className="flex items-center gap-2">
-        <span className="text-xl">{icon}</span>
-        <div className="flex-1">
-          <div className="font-semibold text-sm text-gray-800">
+      <div className="flex items-center gap-2.5">
+        <div className={`w-8 h-8 rounded-md ${nodeDef?.color || 'bg-gray-400'} flex items-center justify-center flex-shrink-0`}>
+          <NodeIcon name={nodeDef?.iconName || 'Box'} size={16} className="text-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold text-sm text-gray-800 truncate">
             {data.label}
           </div>
           {data.config && Object.keys(data.config).length > 0 && (
@@ -51,9 +60,7 @@ function CustomNode({ data, selected }: NodeProps) {
             </div>
           )}
         </div>
-        {status !== 'idle' && (
-          <span className="text-sm">{statusIcons[status] || ''}</span>
-        )}
+        <StatusIndicator status={status} />
       </div>
 
       <Handle
