@@ -1,5 +1,5 @@
 import { useAppStore } from './store/appStore';
-import { Dashboard } from './components/Dashboard';
+import { EnterpriseDashboard } from './components/EnterpriseDashboard';
 import { Builder } from './components/Builder';
 import { ExecutionLogs } from './components/ExecutionLogs';
 import { LayoutDashboard, Workflow, ScrollText } from 'lucide-react';
@@ -57,7 +57,7 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-hidden">
-        {currentTab === 'dashboard' && <Dashboard />}
+        {currentTab === 'dashboard' && <EnterpriseDashboard />}
         {currentTab === 'builder' && <Builder />}
         {currentTab === 'logs' && <ExecutionLogs />}
       </main>

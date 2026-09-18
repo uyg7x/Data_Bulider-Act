@@ -21,6 +21,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { usePipelineStore, NODE_DEFINITIONS } from '../../store/pipelineStore';
 import CustomNode from './CustomNode';
+import AdvancedTransformationNode from './AdvancedTransformationNode';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { v4 as uuidv4 } from 'uuid';
 import { Workflow, Upload } from 'lucide-react';
@@ -43,6 +44,7 @@ function FlowCanvasInner() {
 
   const nodeTypes = useMemo<NodeTypes>(() => ({
     pipelineNode: CustomNode as any,
+    advancedNode: AdvancedTransformationNode as any,
   }), []);
   
   // Handle CSV file drag-and-drop on canvas
@@ -205,9 +207,13 @@ function FlowCanvasInner() {
         y: event.clientY,
       });
 
+      // Use advancedNode type for new transformation nodes
+      const isAdvancedNode = ['flatten_json', 'mask_pii', 'ai_extract'].includes(type);
+      const nodeType = isAdvancedNode ? 'advancedNode' : 'pipelineNode';
+
       const newNode: Node = {
         id: uuidv4(),
-        type: 'pipelineNode',
+        type: nodeType,
         position,
         data: {
           label: nodeDef.label,

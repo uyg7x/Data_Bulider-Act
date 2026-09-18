@@ -13,6 +13,9 @@ import {
   Download,
   FileJson,
   Box,
+  Layers,
+  Shield,
+  Brain,
   type LucideProps,
 } from 'lucide-react';
 import type { FC } from 'react';
@@ -33,6 +36,9 @@ const iconMap: Record<string, FC<LucideProps>> = {
   Download,
   FileJson,
   Box,
+  Layers,
+  Shield,
+  Brain,
 };
 
 interface NodeIconProps {
