@@ -1,10 +1,21 @@
-import { memo } from 'react';
-import { Handle, Position, type NodeProps } from 'reactflow';
+import { memo, type FC } from 'react';
+import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
 import { NODE_DEFINITIONS } from '../../store/pipelineStore';
 import { NodeIcon } from '../../utils/icons';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 
 type NodeStatus = 'idle' | 'running' | 'success' | 'error';
+
+type PipelineNodeData = {
+  label: string;
+  nodeType: string;
+  config: Record<string, any>;
+  status?: NodeStatus;
+  outputPreview?: any[];
+  [key: string]: unknown;
+};
+
+type PipelineNode = Node<PipelineNodeData>;
 
 const statusColors: Record<string, string> = {
   idle: 'border-gray-300 bg-white',
@@ -26,8 +37,8 @@ function StatusIndicator({ status }: { status: NodeStatus }) {
   }
 }
 
-function CustomNode({ data, selected }: NodeProps) {
-  const nodeDef = NODE_DEFINITIONS.find((n: any) => n.type === data.nodeType);
+function CustomNode({ data, selected }: NodeProps<PipelineNode>) {
+  const nodeDef = NODE_DEFINITIONS.find((n) => n.type === data.nodeType);
   const status: NodeStatus = data.status || 'idle';
 
   return (
@@ -72,4 +83,4 @@ function CustomNode({ data, selected }: NodeProps) {
   );
 }
 
-export default memo(CustomNode);
+export default memo(CustomNode) as FC<NodeProps<PipelineNode>>;

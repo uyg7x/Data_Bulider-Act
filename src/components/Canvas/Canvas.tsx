@@ -1,5 +1,6 @@
-import { useCallback, useRef, useEffect } from 'react';
-import ReactFlow, {
+import { useCallback, useRef, useEffect, useMemo } from 'react';
+import {
+  ReactFlow,
   Background,
   Controls,
   MiniMap,
@@ -8,23 +9,21 @@ import ReactFlow, {
   ReactFlowProvider,
   useNodesState,
   useEdgesState,
-  Connection,
-  Edge,
-  Node,
-  NodeChange,
-  EdgeChange,
+  type Connection,
+  type Edge,
+  type Node,
+  type NodeChange,
+  type EdgeChange,
+  type NodeTypes,
   applyNodeChanges,
   applyEdgeChanges,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
 import { usePipelineStore, NODE_DEFINITIONS } from '../../store/pipelineStore';
 import CustomNode from './CustomNode';
+import { ErrorBoundary } from '../ErrorBoundary';
 import { v4 as uuidv4 } from 'uuid';
 import { Workflow } from 'lucide-react';
-
-const nodeTypes = {
-  pipelineNode: CustomNode,
-};
 
 function FlowCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -37,6 +36,10 @@ function FlowCanvas() {
     setSelectedNodeId,
     isExecuting,
   } = usePipelineStore();
+
+  const nodeTypes = useMemo<NodeTypes>(() => ({
+    pipelineNode: CustomNode as any,
+  }), []);
 
   // Use React Flow's built-in state management
   const [nodes, setNodes, onNodesChangeRF] = useNodesState(currentNodes);
@@ -211,8 +214,10 @@ function FlowCanvas() {
 
 export function Canvas() {
   return (
-    <ReactFlowProvider>
-      <FlowCanvas />
-    </ReactFlowProvider>
+    <ErrorBoundary>
+      <ReactFlowProvider>
+        <FlowCanvas />
+      </ReactFlowProvider>
+    </ErrorBoundary>
   );
 }

@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Suppress ResizeObserver loop errors (benign but noisy)
 // These occur when ResizeObserver callbacks trigger layout changes
@@ -16,4 +17,16 @@ const resizeObserverErr = (e: ErrorEvent) => {
 
 window.addEventListener('error', resizeObserverErr);
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+// Handle unhandled promise rejections
+window.addEventListener('unhandledrejection', (e) => {
+  console.warn('Unhandled promise rejection:', e.reason);
+  e.preventDefault();
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  </React.StrictMode>
+);
