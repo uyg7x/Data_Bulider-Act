@@ -1,29 +1,35 @@
 import { motion } from 'framer-motion';
 import { useMemo } from 'react';
+import type { Execution } from '../../types';
 
 interface ActivityHeatmapProps {
   days?: number;
+  executions?: Execution[];
 }
 
-export function ActivityHeatmap({ days = 30 }: ActivityHeatmapProps) {
-  // Generate mock activity data
+export function ActivityHeatmap({ days = 30, executions = [] }: ActivityHeatmapProps) {
+  // Calculate activity data from real executions
   const activityData = useMemo(() => {
     const data = [];
     for (let i = 0; i < days; i++) {
       const date = new Date();
       date.setDate(date.getDate() - (days - 1 - i));
+      const dateStr = date.toISOString().split('T')[0];
       
-      // Random activity level (0-4)
-      const activity = Math.random() > 0.3 ? Math.floor(Math.random() * 5) : 0;
+      // Count executions on this date
+      const activity = executions.filter(exec => {
+        const execDate = new Date(exec.startedAt).toISOString().split('T')[0];
+        return execDate === dateStr;
+      }).length;
       
       data.push({
-        date: date.toISOString().split('T')[0],
-        activity,
+        date: dateStr,
+        activity: Math.min(activity, 4), // Cap at 4 for color scaling
         dayOfWeek: date.getDay(),
       });
     }
     return data;
-  }, [days]);
+  }, [days, executions]);
 
   const getColor = (activity: number) => {
     switch (activity) {

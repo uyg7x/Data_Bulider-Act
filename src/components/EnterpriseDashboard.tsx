@@ -16,15 +16,27 @@ export function EnterpriseDashboard() {
   const [newPipelineName, setNewPipelineName] = useState('');
   const [showGuide, setShowGuide] = useState(false);
 
-  // Calculate metrics
-  const totalRecords = 1247893; // Mock data
+  // Calculate metrics from real data
+  const totalRecords = executions.reduce((sum, exec) => {
+    // Estimate records from logs if available
+    const loadLog = exec.logs.find(log => log.message.includes('Loaded CSV'));
+    if (loadLog) {
+      const match = loadLog.message.match(/Loaded CSV: ([\d,]+) rows/);
+      if (match) {
+        return sum + parseInt(match[1].replace(/,/g, ''));
+      }
+    }
+    return sum;
+  }, 0);
+  
   const activePipelines = pipelines.filter(p => p.status === 'active').length;
-  const successRate = 94; // Mock data
-  const computeHours = 127; // Mock data
-
-  // Calculate pipeline health
+  
+  const totalExecutions = executions.length;
   const successCount = executions.filter(e => e.status === 'success').length;
   const failureCount = executions.filter(e => e.status === 'failed').length;
+  const successRate = totalExecutions > 0 ? Math.round((successCount / totalExecutions) * 100) : 0;
+  
+  const computeHours = Math.round(executions.reduce((sum, exec) => sum + (exec.duration || 0), 0) / 3600);
 
   // Recent activities
   const recentActivities = executions.slice(0, 5).map(exec => ({
@@ -113,7 +125,7 @@ export function EnterpriseDashboard() {
 
         {/* Activity Heatmap */}
         <div className="mb-8">
-          <ActivityHeatmap days={30} />
+          <ActivityHeatmap days={30} executions={executions} />
         </div>
 
         {/* Pipeline Grid */}

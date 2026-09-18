@@ -172,44 +172,6 @@ export const NODE_DEFINITIONS: NodeDefinition[] = [
   },
 ];
 
-// Sample data for demo
-const generateSampleData = () => {
-  const names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank', 'Grace', 'Henry'];
-  const cities = ['New York', 'London', 'Tokyo', 'Paris', 'Berlin', 'Sydney'];
-  return names.map((name, i) => ({
-    id: i + 1,
-    name,
-    age: 20 + Math.floor(Math.random() * 40),
-    salary: 30000 + Math.floor(Math.random() * 70000),
-    city: cities[Math.floor(Math.random() * cities.length)],
-    department: ['Engineering', 'Marketing', 'Sales', 'HR'][Math.floor(Math.random() * 4)],
-    score: Math.floor(Math.random() * 100),
-  }));
-};
-
-// Generate chart data from sample data
-const generateChartData = (chartType: string, xAxis: string, yAxis: string) => {
-  const data = generateSampleData();
-  const xCol = xAxis || 'name';
-  const yCol = yAxis || 'salary';
-
-  if (chartType === 'pie') {
-    // Aggregate for pie chart
-    const grouped: Record<string, number> = {};
-    data.forEach((row: any) => {
-      const key = String(row[xCol] || 'Unknown');
-      grouped[key] = (grouped[key] || 0) + Number(row[yCol] || 0);
-    });
-    return Object.entries(grouped).map(([name, value]) => ({ name, value }));
-  }
-
-  return data.map((row: any) => ({
-    name: String(row[xCol] || row.name),
-    value: Number(row[yCol] || row.salary),
-    ...row,
-  }));
-};
-
 interface PipelineState {
   pipelines: Pipeline[];
   executions: Execution[];
@@ -237,61 +199,8 @@ interface PipelineState {
 }
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({
-  pipelines: [
-    {
-      id: 'demo-1',
-      name: 'Employee Data Cleanup',
-      canvasJson: { nodes: [], edges: [] },
-      status: 'active',
-      createdAt: '2024-01-15T10:30:00Z',
-      updatedAt: '2024-01-20T14:22:00Z',
-    },
-    {
-      id: 'demo-2',
-      name: 'Sales Report Generator',
-      canvasJson: { nodes: [], edges: [] },
-      status: 'draft',
-      createdAt: '2024-01-18T09:00:00Z',
-      updatedAt: '2024-01-19T16:45:00Z',
-    },
-    {
-      id: 'demo-3',
-      name: 'Customer Segmentation',
-      canvasJson: { nodes: [], edges: [] },
-      status: 'archived',
-      createdAt: '2024-01-10T11:00:00Z',
-      updatedAt: '2024-01-12T08:30:00Z',
-    },
-  ],
-  executions: [
-    {
-      id: 'exec-1',
-      pipelineId: 'demo-1',
-      pipelineName: 'Employee Data Cleanup',
-      status: 'success',
-      logs: [
-        { timestamp: '2024-01-20T14:22:00Z', nodeId: '1', message: 'Loaded CSV: 1,247 rows', level: 'success' },
-        { timestamp: '2024-01-20T14:22:01Z', nodeId: '2', message: 'Filtered nulls: removed 23 rows', level: 'info' },
-        { timestamp: '2024-01-20T14:22:02Z', nodeId: '3', message: 'Exported CSV: 1,224 rows', level: 'success' },
-      ],
-      startedAt: '2024-01-20T14:22:00Z',
-      completedAt: '2024-01-20T14:22:02Z',
-      duration: 2.3,
-    },
-    {
-      id: 'exec-2',
-      pipelineId: 'demo-2',
-      pipelineName: 'Sales Report Generator',
-      status: 'failed',
-      logs: [
-        { timestamp: '2024-01-19T16:45:00Z', nodeId: '1', message: 'Loaded CSV: 856 rows', level: 'success' },
-        { timestamp: '2024-01-19T16:45:01Z', nodeId: '2', message: 'Error: Column "revenue" not found', level: 'error' },
-      ],
-      startedAt: '2024-01-19T16:45:00Z',
-      completedAt: '2024-01-19T16:45:01Z',
-      duration: 1.1,
-    },
-  ],
+  pipelines: [],
+  executions: [],
   currentNodes: [],
   currentEdges: [],
   selectedNodeId: null,
@@ -379,8 +288,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     }));
 
     const logs: LogEntry[] = [];
-    const sampleData = generateSampleData();
-    let currentData = [...sampleData];
+    let currentData: any[] = [];
 
     // Topological sort - simple version for linear pipelines
     const sortedNodes = [...currentNodes];
@@ -407,20 +315,20 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
 
       switch (nodeType) {
         case 'load_csv': {
-          // Use actual uploaded CSV data if available, otherwise use sample data
+          // Use actual uploaded CSV data
           const csvData = get().csvDataStore[node.id];
           if (csvData && csvData.length > 0) {
             currentData = [...csvData];
             message = `Loaded CSV: ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns`;
           } else {
-            currentData = [...sampleData];
-            message = `Loaded CSV (sample): ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns. Upload a CSV file to use real data.`;
+            success = false;
+            message = `Error: No CSV file uploaded. Please upload a CSV file in the node properties.`;
           }
           break;
         }
         case 'load_db':
-          currentData = [...sampleData];
-          message = `Database query returned ${currentData.length} rows`;
+          success = false;
+          message = `Error: Database connections not configured. Please configure database credentials.`;
           break;
         case 'filter_nulls':
           const beforeCount = currentData.length;
@@ -435,11 +343,30 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         case 'math_operation':
           message = `Applied ${node.data.config?.operation} on ${node.data.config?.columnA} and ${node.data.config?.columnB}`;
           break;
-        case 'filter_rows':
+        case 'filter_rows': {
           const filteredCount = currentData.length;
-          currentData = currentData.filter(() => Math.random() > 0.2);
+          const column = node.data.config?.column;
+          const operator = node.data.config?.operator || '>';
+          const value = parseFloat(node.data.config?.value || '0');
+          
+          currentData = currentData.filter((row: any) => {
+            const rowValue = parseFloat(row[column]);
+            if (isNaN(rowValue)) return false;
+            
+            switch (operator) {
+              case '>': return rowValue > value;
+              case '<': return rowValue < value;
+              case '==': return rowValue === value;
+              case '!=': return rowValue !== value;
+              case '>=': return rowValue >= value;
+              case '<=': return rowValue <= value;
+              default: return true;
+            }
+          });
+          
           message = `Filtered rows: ${filteredCount} to ${currentData.length} rows`;
           break;
+        }
         case 'sort_data':
           message = `Sorted by "${node.data.config?.column}" (${node.data.config?.order || 'ascending'})`;
           break;
@@ -478,12 +405,6 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
           break;
         default:
           message = `Processed node: ${nodeDef?.label || nodeType}`;
-      }
-
-      // Random failure simulation (5% chance)
-      if (Math.random() < 0.05 && i > 0) {
-        success = false;
-        message = `Error processing node: Unexpected data type mismatch`;
       }
 
       logs.push({
