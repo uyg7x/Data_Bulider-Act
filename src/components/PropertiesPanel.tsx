@@ -2,6 +2,7 @@ import { usePipelineStore, NODE_DEFINITIONS } from '../store/pipelineStore';
 import { Settings, Trash2, Info, Table } from 'lucide-react';
 import { NodeIcon } from '../utils/icons';
 import { ChartPreview } from './ChartPreview';
+import { CsvUploader } from './CsvUploader';
 
 export function PropertiesPanel() {
   const { currentNodes, selectedNodeId, setSelectedNodeId, updateNodeConfig, setCurrentNodes, currentEdges, setCurrentEdges, chartData, chartType } = usePipelineStore();
@@ -148,6 +149,11 @@ export function PropertiesPanel() {
             {selectedNode.data.status || 'idle'}
           </div>
         </div>
+
+        {/* CSV Uploader for load_csv nodes */}
+        {selectedNode.data.nodeType === 'load_csv' && (
+          <CsvUploader nodeId={selectedNode.id} />
+        )}
 
         {/* Chart Preview for generate_chart nodes */}
         {selectedNode.data.nodeType === 'generate_chart' && chartData && chartType && (

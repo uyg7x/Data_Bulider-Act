@@ -179,6 +179,7 @@ interface PipelineState {
   isExecuting: boolean;
   chartData: any[] | null;
   chartType: string | null;
+  csvDataStore: Record<string, any[]>; // nodeId -> parsed CSV data
   
   // Actions
   createPipeline: (name: string) => string;
@@ -191,6 +192,8 @@ interface PipelineState {
   executePipeline: (pipelineId: string) => Promise<void>;
   loadPipeline: (id: string) => void;
   setChartData: (data: any[] | null, type: string | null) => void;
+  setCsvData: (nodeId: string, data: any[]) => void;
+  getCsvData: (nodeId: string) => any[] | null;
 }
 
 export const usePipelineStore = create<PipelineState>((set, get) => ({
@@ -255,6 +258,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   isExecuting: false,
   chartData: null,
   chartType: null,
+  csvDataStore: {},
 
   createPipeline: (name: string) => {
     const id = uuidv4();
@@ -288,6 +292,16 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
   setCurrentEdges: (edges: any[]) => set({ currentEdges: edges }),
   setSelectedNodeId: (id: string | null) => set({ selectedNodeId: id }),
   setChartData: (data, type) => set({ chartData: data, chartType: type }),
+  
+  setCsvData: (nodeId: string, data: any[]) => {
+    set((state) => ({
+      csvDataStore: { ...state.csvDataStore, [nodeId]: data },
+    }));
+  },
+  
+  getCsvData: (nodeId: string) => {
+    return get().csvDataStore[nodeId] || null;
+  },
 
   updateNodeConfig: (nodeId: string, config: Record<string, any>) => {
     set((state) => ({
@@ -352,10 +366,18 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       const nodeType = node.data?.nodeType;
 
       switch (nodeType) {
-        case 'load_csv':
-          currentData = [...sampleData];
-          message = `Loaded CSV: ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns`;
+        case 'load_csv': {
+          // Use actual uploaded CSV data if available, otherwise use sample data
+          const csvData = get().csvDataStore[node.id];
+          if (csvData && csvData.length > 0) {
+            currentData = [...csvData];
+            message = `Loaded CSV: ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns`;
+          } else {
+            currentData = [...sampleData];
+            message = `Loaded CSV (sample): ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns. Upload a CSV file to use real data.`;
+          }
           break;
+        }
         case 'load_db':
           currentData = [...sampleData];
           message = `Database query returned ${currentData.length} rows`;
@@ -383,9 +405,27 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
           break;
         case 'generate_chart': {
           const chartType = node.data.config?.chartType || 'bar';
-          const xAxis = node.data.config?.xAxis || 'name';
-          const yAxis = node.data.config?.yAxis || 'salary';
-          const chartData = generateChartData(chartType, xAxis, yAxis);
+          const firstRow = currentData[0] as any;
+          const xAxis = node.data.config?.xAxis || (firstRow ? Object.keys(firstRow)[0] : 'name');
+          const yAxis = node.data.config?.yAxis || (firstRow ? Object.keys(firstRow).find(k => typeof firstRow[k] === 'number') : 'value') || 'value';
+          
+          // Generate chart data from currentData
+          let chartData: any[];
+          if (chartType === 'pie') {
+            const grouped: Record<string, number> = {};
+            currentData.forEach((row: any) => {
+              const key = String(row[xAxis] || 'Unknown');
+              grouped[key] = (grouped[key] || 0) + Number(row[yAxis] || 0);
+            });
+            chartData = Object.entries(grouped).map(([name, value]) => ({ name, value }));
+          } else {
+            chartData = currentData.map((row: any) => ({
+              name: String(row[xAxis] || ''),
+              value: Number(row[yAxis] || 0),
+              ...row,
+            }));
+          }
+          
           set({ chartData, chartType });
           message = `Generated ${chartType} chart with ${chartData.length} data points`;
           break;
