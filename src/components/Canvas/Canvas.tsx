@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -6,9 +6,15 @@ import ReactFlow, {
   addEdge,
   useReactFlow,
   ReactFlowProvider,
+  useNodesState,
+  useEdgesState,
   Connection,
   Edge,
   Node,
+  NodeChange,
+  EdgeChange,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { usePipelineStore, NODE_DEFINITIONS } from '../../store/pipelineStore';
@@ -28,8 +34,60 @@ function FlowCanvas() {
     setCurrentNodes,
     setCurrentEdges,
     setSelectedNodeId,
-    selectedNodeId,
+    isExecuting,
   } = usePipelineStore();
+
+  // Use React Flow's built-in state management
+  const [nodes, setNodes, onNodesChangeRF] = useNodesState(currentNodes);
+  const [edges, setEdges, onEdgesChangeRF] = useEdgesState(currentEdges);
+
+  // Track if update is coming from external source to prevent circular updates
+  const isExternalUpdate = useRef(false);
+
+  // Sync external state changes to React Flow state
+  // Skip sync during execution to prevent ResizeObserver loop
+  useEffect(() => {
+    if (!isExternalUpdate.current && !isExecuting) {
+      setNodes(currentNodes);
+    }
+  }, [currentNodes, setNodes, isExecuting]);
+
+  useEffect(() => {
+    if (!isExternalUpdate.current && !isExecuting) {
+      setEdges(currentEdges);
+    }
+  }, [currentEdges, setEdges, isExecuting]);
+
+  // Handle node changes and sync to Zustand
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      onNodesChangeRF(changes);
+      // Apply changes to get the new state and sync to Zustand
+      const updatedNodes = applyNodeChanges(changes, nodes);
+      isExternalUpdate.current = true;
+      setCurrentNodes(updatedNodes);
+      // Reset flag after a tick
+      requestAnimationFrame(() => {
+        isExternalUpdate.current = false;
+      });
+    },
+    [nodes, onNodesChangeRF, setCurrentNodes]
+  );
+
+  // Handle edge changes and sync to Zustand
+  const handleEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      onEdgesChangeRF(changes);
+      // Apply changes to get the new state and sync to Zustand
+      const updatedEdges = applyEdgeChanges(changes, edges);
+      isExternalUpdate.current = true;
+      setCurrentEdges(updatedEdges);
+      requestAnimationFrame(() => {
+        isExternalUpdate.current = false;
+      });
+    },
+    [edges, onEdgesChangeRF, setCurrentEdges]
+  );
 
   const onConnect = useCallback(
     (params: Connection) => {
@@ -43,9 +101,9 @@ function FlowCanvas() {
         animated: true,
         style: { stroke: '#6366f1', strokeWidth: 2 },
       };
-      setCurrentEdges(addEdge(newEdge, currentEdges));
+      setEdges((eds) => addEdge(newEdge, eds));
     },
-    [currentEdges, setCurrentEdges]
+    [setEdges]
   );
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -80,9 +138,9 @@ function FlowCanvas() {
         },
       };
 
-      setCurrentNodes([...currentNodes, newNode]);
+      setNodes((nds) => [...nds, newNode]);
     },
-    [currentNodes, setCurrentNodes, screenToFlowPosition]
+    [setNodes, screenToFlowPosition]
   );
 
   const onNodeClick = useCallback(
@@ -96,55 +154,21 @@ function FlowCanvas() {
     setSelectedNodeId(null);
   }, [setSelectedNodeId]);
 
-  const onNodesChange = useCallback(
-    (changes: any[]) => {
-      // Handle position changes and removals
-      let updatedNodes = [...currentNodes];
-      
-      for (const change of changes) {
-        if (change.type === 'position' && change.position) {
-          updatedNodes = updatedNodes.map((n) =>
-            n.id === change.id ? { ...n, position: change.position } : n
-          );
-        } else if (change.type === 'remove') {
-          updatedNodes = updatedNodes.filter((n) => n.id !== change.id);
-        }
-      }
-      
-      setCurrentNodes(updatedNodes);
-    },
-    [currentNodes, setCurrentNodes]
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: any[]) => {
-      let updatedEdges = [...currentEdges];
-      
-      for (const change of changes) {
-        if (change.type === 'remove') {
-          updatedEdges = updatedEdges.filter((e) => e.id !== change.id);
-        }
-      }
-      
-      setCurrentEdges(updatedEdges);
-    },
-    [currentEdges, setCurrentEdges]
-  );
-
   return (
     <div className="flex-1 h-full" ref={reactFlowWrapper}>
       <ReactFlow
-        nodes={currentNodes}
-        edges={currentEdges}
+        nodes={nodes}
+        edges={edges}
         onConnect={onConnect}
         onDrop={onDrop}
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onNodesChange={handleNodesChange}
+        onEdgesChange={handleEdgesChange}
         nodeTypes={nodeTypes}
         fitView
+        proOptions={{ hideAttribution: true }}
         className="bg-gray-50"
         defaultEdgeOptions={{
           animated: true,
@@ -164,7 +188,7 @@ function FlowCanvas() {
             }
           }}
         />
-        {currentNodes.length === 0 && (
+        {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center">
               <div className="text-6xl mb-4">🔧</div>

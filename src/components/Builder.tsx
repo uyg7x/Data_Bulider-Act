@@ -19,7 +19,7 @@ export function Builder() {
     loadPipeline,
   } = usePipelineStore();
 
-  // If no pipeline selected, auto-create one
+  // If no pipeline selected, auto-create one; otherwise load it
   useEffect(() => {
     if (!selectedPipelineId) {
       const id = createPipeline('New Pipeline');
@@ -27,7 +27,8 @@ export function Builder() {
     } else {
       loadPipeline(selectedPipelineId);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPipelineId]);
 
   const pipeline = pipelines.find((p) => p.id === selectedPipelineId);
 

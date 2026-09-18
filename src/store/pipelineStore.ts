@@ -294,7 +294,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
     // Simulate execution
     for (let i = 0; i < sortedNodes.length; i++) {
       const node = sortedNodes[i];
-      const nodeDef = NODE_DEFINITIONS.find((n) => n.type === node.type);
+      const nodeDef = NODE_DEFINITIONS.find((n) => n.type === node.data?.nodeType);
       
       // Set node to running
       set((state) => ({
@@ -309,8 +309,9 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
       // Process based on node type
       let message = '';
       let success = true;
+      const nodeType = node.data?.nodeType;
 
-      switch (node.type) {
+      switch (nodeType) {
         case 'load_csv':
           currentData = [...sampleData];
           message = `Loaded CSV: ${currentData.length} rows, ${Object.keys(currentData[0]).length} columns`;
@@ -350,7 +351,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
           message = `Exported JSON: ${currentData.length} rows → ${node.data.config?.fileName || 'output.json'}`;
           break;
         default:
-          message = `Processed node: ${nodeDef?.label || node.type}`;
+          message = `Processed node: ${nodeDef?.label || nodeType}`;
       }
 
       // Random failure simulation (5% chance)
@@ -363,7 +364,7 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         timestamp: new Date().toISOString(),
         nodeId: node.id,
         message,
-        level: success ? (node.type.startsWith('export') || node.type.startsWith('load') ? 'success' : 'info') : 'error',
+        level: success ? (nodeType.startsWith('export') || nodeType.startsWith('load') ? 'success' : 'info') : 'error',
       });
 
       // Update node status
