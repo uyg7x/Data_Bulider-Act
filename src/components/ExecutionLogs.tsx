@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePipelineStore } from '../store/pipelineStore';
 import {
   Clock,
@@ -12,6 +13,7 @@ import {
   Terminal,
   ScrollText,
   BarChart3,
+  RotateCcw,
 } from 'lucide-react';
 import { ChartPreview } from './ChartPreview';
 
@@ -34,10 +36,20 @@ export function ExecutionLogs() {
     success: 'text-green-600',
   };
 
+  const handleRetry = (executionId: string) => {
+    // Mock retry functionality
+    alert(`Retrying execution ${executionId}...`);
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white border-b border-gray-200 px-8 py-6"
+      >
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Execution & Logs</h1>
@@ -71,14 +83,19 @@ export function ExecutionLogs() {
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Content */}
       <div className="p-8">
         {activeTab === 'history' ? (
           <div className="space-y-3">
             {executions.length === 0 ? (
-              <div className="text-center py-16">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                className="text-center py-16"
+              >
                 <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-100 to-slate-100 rounded-2xl flex items-center justify-center">
                   <ScrollText size={32} className="text-gray-400" />
                 </div>
@@ -88,16 +105,19 @@ export function ExecutionLogs() {
                 <p className="text-sm text-gray-400">
                   Run a pipeline to see execution history here
                 </p>
-              </div>
+              </motion.div>
             ) : (
-              executions.map((execution) => {
+              executions.map((execution, index) => {
                 const statusInfo = statusConfig[execution.status];
                 const StatusIcon = statusInfo.icon;
                 const isExpanded = expandedExec === execution.id;
 
                 return (
-                  <div
+                  <motion.div
                     key={execution.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
                     className="bg-white rounded-xl border border-gray-200 overflow-hidden"
                   >
                     {/* Execution Header */}
@@ -107,7 +127,7 @@ export function ExecutionLogs() {
                     >
                       <div className="flex items-center gap-4">
                         <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusInfo.bg} ${statusInfo.color}`}>
-                          <StatusIcon size={12} />
+                          <StatusIcon size={12} className={execution.status === 'running' ? 'animate-spin' : ''} />
                           {statusInfo.label}
                         </span>
                         <div>
@@ -131,6 +151,20 @@ export function ExecutionLogs() {
                             <Download size={16} />
                           </button>
                         )}
+                        {execution.status === 'failed' && (
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRetry(execution.id);
+                            }}
+                            className="p-1.5 hover:bg-orange-50 rounded-md transition-colors text-gray-400 hover:text-orange-600"
+                            title="Retry execution"
+                          >
+                            <RotateCcw size={16} />
+                          </motion.button>
+                        )}
                         {isExpanded ? (
                           <ChevronDown size={18} className="text-gray-400" />
                         ) : (
@@ -140,92 +174,138 @@ export function ExecutionLogs() {
                     </div>
 
                     {/* Expanded Content */}
-                    {isExpanded && (
-                      <div className="border-t border-gray-100">
-                        {/* Logs */}
-                        <div className="px-5 py-4">
-                          <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                            <Terminal size={12} />
-                            Execution Logs
-                          </h5>
-                          <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm space-y-1.5 max-h-48 overflow-y-auto">
-                            {execution.logs.map((log, i) => (
-                              <div key={i} className="flex items-start gap-2">
-                                <span className="text-gray-500 text-xs whitespace-nowrap">
-                                  {new Date(log.timestamp).toLocaleTimeString()}
-                                </span>
-                                <span className={`text-xs ${logLevelColors[log.level]}`}>
-                                  [{log.level.toUpperCase()}]
-                                </span>
-                                <span className="text-gray-300 text-xs">
-                                  {log.message}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Data Preview */}
-                        {execution.outputData && execution.outputData.length > 0 && (
-                          <div className="px-5 py-4 border-t border-gray-100">
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="border-t border-gray-100 overflow-hidden"
+                        >
+                          {/* Logs */}
+                          <div className="px-5 py-4">
                             <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                              <Table size={12} />
-                              Output Data Preview
+                              <Terminal size={12} />
+                              Execution Logs
                             </h5>
-                            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="bg-gray-50">
-                                    {Object.keys(execution.outputData[0]).map((key) => (
-                                      <th
-                                        key={key}
-                                        className="px-3 py-2 text-left font-medium text-gray-600 border-b"
-                                      >
-                                        {key}
-                                      </th>
-                                    ))}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {execution.outputData.map((row: any, i: number) => (
-                                    <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
-                                      {Object.values(row).map((val: any, j: number) => (
-                                        <td key={j} className="px-3 py-2 text-gray-700">
-                                          {String(val)}
-                                        </td>
-                                      ))}
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm space-y-1.5 max-h-48 overflow-y-auto">
+                              {execution.logs.map((log, i) => (
+                                <motion.div
+                                  key={i}
+                                  initial={{ opacity: 0, x: -10 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.05 }}
+                                  className="flex items-start gap-2"
+                                >
+                                  <span className="text-gray-500 text-xs whitespace-nowrap">
+                                    {new Date(log.timestamp).toLocaleTimeString()}
+                                  </span>
+                                  <span className={`text-xs ${logLevelColors[log.level]}`}>
+                                    [{log.level.toUpperCase()}]
+                                  </span>
+                                  <span className="text-gray-300 text-xs">
+                                    {log.message}
+                                  </span>
+                                </motion.div>
+                              ))}
                             </div>
                           </div>
-                        )}
 
-                        {/* Chart Preview */}
-                        {chartData && chartType && execution.status === 'success' && (
-                          <div className="px-5 py-4 border-t border-gray-100">
-                            <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                              <BarChart3 size={12} />
-                              Generated Chart
-                            </h5>
-                            <ChartPreview
-                              data={chartData}
-                              chartType={chartType}
-                              title={`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                          {/* Error Trace for failed executions */}
+                          {execution.status === 'failed' && (
+                            <div className="px-5 py-4 border-t border-gray-100">
+                              <h5 className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                <AlertCircle size={12} />
+                                Error Trace
+                              </h5>
+                              <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs space-y-2">
+                                <div className="text-red-400">
+                                  Error: Pipeline execution failed
+                                </div>
+                                <div className="text-gray-400">
+                                  at PipelineExecutor.execute (pipeline.ts:142)
+                                </div>
+                                <div className="text-gray-400">
+                                  at NodeProcessor.process (node.ts:89)
+                                </div>
+                                <div className="text-gray-400">
+                                  at DataTransformer.transform (transform.ts:56)
+                                </div>
+                                <div className="text-yellow-400 mt-2">
+                                  Caused by: Column "revenue" not found in dataset
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Data Preview */}
+                          {execution.outputData && execution.outputData.length > 0 && (
+                            <div className="px-5 py-4 border-t border-gray-100">
+                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                <Table size={12} />
+                                Output Data Preview
+                              </h5>
+                              <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="bg-gray-50">
+                                      {Object.keys(execution.outputData[0]).map((key) => (
+                                        <th
+                                          key={key}
+                                          className="px-3 py-2 text-left font-medium text-gray-600 border-b"
+                                        >
+                                          {key}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {execution.outputData.map((row: any, i: number) => (
+                                      <tr key={i} className="border-b border-gray-50 hover:bg-gray-50">
+                                        {Object.values(row).map((val: any, j: number) => (
+                                          <td key={j} className="px-3 py-2 text-gray-700">
+                                            {String(val)}
+                                          </td>
+                                        ))}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Chart Preview */}
+                          {chartData && chartType && execution.status === 'success' && (
+                            <div className="px-5 py-4 border-t border-gray-100">
+                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                                <BarChart3 size={12} />
+                                Generated Chart
+                              </h5>
+                              <ChartPreview
+                                data={chartData}
+                                chartType={chartType}
+                                title={`${chartType.charAt(0).toUpperCase() + chartType.slice(1)} Chart`}
+                              />
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 );
               })
             )}
           </div>
         ) : (
           /* Live Logs Tab */
-          <div className="bg-gray-900 rounded-xl p-6 min-h-[400px]">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+            className="bg-gray-900 rounded-xl p-6 min-h-[400px]"
+          >
             <div className="flex items-center gap-2 mb-4">
               <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-green-400 text-sm font-mono">Live Log Stream</span>
@@ -249,7 +329,7 @@ export function ExecutionLogs() {
                 <p className="text-green-400">[SUCCESS] Node 2 completed: 1,224 rows remaining</p>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

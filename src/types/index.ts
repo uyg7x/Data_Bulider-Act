@@ -11,6 +11,7 @@ export interface Pipeline {
   status: PipelineStatus;
   createdAt: string;
   updatedAt: string;
+  healthHistory?: boolean[]; // Last 5 runs: true = success, false = failed
 }
 
 export interface Execution {
