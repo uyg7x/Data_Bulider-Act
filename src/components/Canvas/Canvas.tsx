@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useRef, useEffect, useMemo, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -23,7 +23,8 @@ import { usePipelineStore, NODE_DEFINITIONS } from '../../store/pipelineStore';
 import CustomNode from './CustomNode';
 import { ErrorBoundary } from '../ErrorBoundary';
 import { v4 as uuidv4 } from 'uuid';
-import { Workflow } from 'lucide-react';
+import { Workflow, Upload } from 'lucide-react';
+import Papa from 'papaparse';
 
 function FlowCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -35,11 +36,85 @@ function FlowCanvas() {
     setCurrentEdges,
     setSelectedNodeId,
     isExecuting,
+    setCsvData,
   } = usePipelineStore();
+  
+  const [isDragging, setIsDragging] = useState(false);
 
   const nodeTypes = useMemo<NodeTypes>(() => ({
     pipelineNode: CustomNode as any,
   }), []);
+  
+  // Handle CSV file drag-and-drop on canvas
+  const handleCanvasDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      setIsDragging(false);
+      
+      const files = event.dataTransfer.files;
+      if (files.length === 0) return;
+      
+      const file = files[0];
+      if (!file.name.endsWith('.csv')) {
+        alert('Please drop a CSV file');
+        return;
+      }
+      
+      // Parse the CSV file
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+        complete: (results) => {
+          if (results.errors.length > 0 || results.data.length === 0) {
+            alert('Error parsing CSV file');
+            return;
+          }
+          
+          const data = results.data as any[];
+          const position = screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY,
+          });
+          
+          // Create a Load CSV node
+          const newNode: Node = {
+            id: uuidv4(),
+            type: 'pipelineNode',
+            position,
+            data: {
+              label: 'Load CSV',
+              nodeType: 'load_csv',
+              config: {
+                fileName: file.name,
+                delimiter: ',',
+                hasHeader: true,
+              },
+              status: 'idle',
+            },
+          };
+          
+          // Store the CSV data
+          setCsvData(newNode.id, data);
+          setCurrentNodes([...currentNodes, newNode]);
+        },
+        error: () => {
+          alert('Error parsing CSV file');
+        },
+      });
+    },
+    [currentNodes, setCurrentNodes, setCsvData, screenToFlowPosition]
+  );
+  
+  const handleCanvasDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    setIsDragging(true);
+  }, []);
+  
+  const handleCanvasDragLeave = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
   // Use React Flow's built-in state management
   const [nodes, setNodes, onNodesChangeRF] = useNodesState(currentNodes);
@@ -160,25 +235,42 @@ function FlowCanvas() {
 
   return (
     <div className="flex-1 h-full" ref={reactFlowWrapper}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onConnect={onConnect}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onNodeClick={onNodeClick}
-        onPaneClick={onPaneClick}
-        onNodesChange={handleNodesChange}
-        onEdgesChange={handleEdgesChange}
-        nodeTypes={nodeTypes}
-        fitView
-        proOptions={{ hideAttribution: true }}
-        className="bg-gray-50"
-        defaultEdgeOptions={{
-          animated: true,
-          style: { stroke: '#6366f1', strokeWidth: 2 },
-        }}
-      >
+      <div className="relative w-full h-full">
+        {/* Drop zone overlay */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 bg-blue-50 border-4 border-dashed border-blue-400 flex items-center justify-center pointer-events-none">
+            <div className="bg-white px-8 py-6 rounded-lg shadow-lg">
+              <div className="flex items-center gap-3">
+                <Upload className="w-8 h-8 text-blue-500" />
+                <div>
+                  <p className="text-lg font-semibold text-gray-800">Drop CSV file here</p>
+                  <p className="text-sm text-gray-500">Your data will be loaded automatically</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onConnect={onConnect}
+          onDrop={handleCanvasDrop}
+          onDragOver={handleCanvasDragOver}
+          onDragLeave={handleCanvasDragLeave}
+          onNodeClick={onNodeClick}
+          onPaneClick={onPaneClick}
+          onNodesChange={handleNodesChange}
+          onEdgesChange={handleEdgesChange}
+          nodeTypes={nodeTypes}
+          fitView
+          proOptions={{ hideAttribution: true }}
+          className="bg-gray-50"
+          defaultEdgeOptions={{
+            animated: true,
+            style: { stroke: '#6366f1', strokeWidth: 2 },
+          }}
+        >
         <Background color="#e2e8f0" gap={20} />
         <Controls className="!bg-white !border-gray-200 !shadow-md" />
         <MiniMap
@@ -194,20 +286,29 @@ function FlowCanvas() {
         />
         {nodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center">
+            <div className="text-center max-w-md">
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center">
                 <Workflow size={32} className="text-blue-500" />
               </div>
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
                 Build Your Pipeline
               </h3>
-              <p className="text-sm text-gray-400 max-w-xs">
+              <p className="text-sm text-gray-400 mb-4">
                 Drag nodes from the left panel onto the canvas and connect them to create your data pipeline
               </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-left">
+                <p className="text-xs font-semibold text-blue-700 mb-1">Load your CSV data:</p>
+                <ul className="text-xs text-blue-600 space-y-1">
+                  <li>• Click "Upload CSV" button in the top bar</li>
+                  <li>• Drag & drop a CSV file directly onto this canvas</li>
+                  <li>• Add a "Load CSV" node and upload in properties panel</li>
+                </ul>
+              </div>
             </div>
           </div>
         )}
-      </ReactFlow>
+        </ReactFlow>
+      </div>
     </div>
   );
 }

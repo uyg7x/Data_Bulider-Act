@@ -3,8 +3,10 @@ import { PropertiesPanel } from './PropertiesPanel';
 import { Canvas } from './Canvas/Canvas';
 import { useAppStore } from '../store/appStore';
 import { usePipelineStore } from '../store/pipelineStore';
-import { Play, Save, ArrowLeft } from 'lucide-react';
-import { useEffect } from 'react';
+import { Play, Save, ArrowLeft, Upload } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import Papa from 'papaparse';
+import { v4 as uuidv4 } from 'uuid';
 
 export function Builder() {
   const { setCurrentTab, selectedPipelineId, setSelectedPipelineId } = useAppStore();
@@ -17,7 +19,11 @@ export function Builder() {
     pipelines,
     createPipeline,
     loadPipeline,
+    setCurrentNodes,
+    setCsvData,
   } = usePipelineStore();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // If no pipeline selected, auto-create one; otherwise load it
   useEffect(() => {
@@ -31,6 +37,60 @@ export function Builder() {
   }, [selectedPipelineId]);
 
   const pipeline = pipelines.find((p) => p.id === selectedPipelineId);
+  
+  // Handle CSV file upload from button
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!file.name.endsWith('.csv')) {
+      alert('Please select a CSV file');
+      return;
+    }
+    
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      dynamicTyping: true,
+      complete: (results) => {
+        if (results.errors.length > 0 || results.data.length === 0) {
+          alert('Error parsing CSV file');
+          return;
+        }
+        
+        const data = results.data as any[];
+        
+        // Create a Load CSV node with the data
+        const newNode = {
+          id: uuidv4(),
+          type: 'pipelineNode',
+          position: { x: 250 + Math.random() * 200, y: 150 + currentNodes.length * 100 },
+          data: {
+            label: 'Load CSV',
+            nodeType: 'load_csv',
+            config: {
+              fileName: file.name,
+              delimiter: ',',
+              hasHeader: true,
+            },
+            status: 'idle',
+          },
+        };
+        
+        // Store the CSV data
+        setCsvData(newNode.id, data);
+        setCurrentNodes([...currentNodes, newNode]);
+      },
+      error: () => {
+        alert('Error parsing CSV file');
+      },
+    });
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleRun = async () => {
     if (selectedPipelineId) {
@@ -68,6 +128,17 @@ export function Builder() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-2 px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium cursor-pointer">
+            <Upload size={16} />
+            Upload CSV
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
           <button
             onClick={handleSave}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium"
