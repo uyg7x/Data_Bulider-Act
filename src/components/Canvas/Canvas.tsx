@@ -26,7 +26,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Workflow, Upload } from 'lucide-react';
 import Papa from 'papaparse';
 
-function FlowCanvas() {
+function FlowCanvasInner() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const {
@@ -311,6 +311,29 @@ function FlowCanvas() {
       </div>
     </div>
   );
+}
+
+function FlowCanvas() {
+  const [isReady, setIsReady] = useState(false);
+  
+  useEffect(() => {
+    // Small delay to ensure ReactFlowProvider is fully initialized
+    const timer = setTimeout(() => setIsReady(true), 10);
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (!isReady) {
+    return (
+      <div className="flex-1 h-full flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-3 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm text-gray-500">Loading canvas...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return <FlowCanvasInner />;
 }
 
 export function Canvas() {
