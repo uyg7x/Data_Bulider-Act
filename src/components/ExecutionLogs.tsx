@@ -17,6 +17,36 @@ import {
 } from 'lucide-react';
 import { ChartPreview } from './ChartPreview';
 
+const convertToCSV = (data: any[]): string => {
+  if (!data || data.length === 0) return '';
+  const headers = Object.keys(data[0]);
+  const rows = data.map((row) =>
+    headers.map((header) => {
+      const value = row[header];
+      // Escape quotes and wrap in quotes if contains comma, newline, or quote
+      const str = String(value ?? '');
+      if (str.includes(',') || str.includes('\n') || str.includes('"')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    }).join(',')
+  );
+  return [headers.join(','), ...rows].join('\n');
+};
+
+const downloadCSV = (csvContent: string, fileName: string) => {
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', fileName);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export function ExecutionLogs() {
   const { executions, chartData, chartType } = usePipelineStore();
   const [expandedExec, setExpandedExec] = useState<string | null>(null);
@@ -146,8 +176,17 @@ export function ExecutionLogs() {
                             {execution.duration.toFixed(1)}s
                           </span>
                         )}
-                        {execution.status === 'success' && (
-                          <button className="p-1.5 hover:bg-gray-100 rounded-md transition-colors text-gray-400 hover:text-blue-600" title="Download output">
+                        {execution.status === 'success' && execution.outputData && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const csv = convertToCSV(execution.outputData!);
+                              const fileName = `${execution.pipelineName.replace(/\s+/g, '_')}_output_${new Date(execution.completedAt).toISOString().split('T')[0]}.csv`;
+                              downloadCSV(csv, fileName);
+                            }}
+                            className="p-1.5 hover:bg-gray-100 rounded-md transition-colors text-gray-400 hover:text-blue-600"
+                            title="Download output as CSV"
+                          >
                             <Download size={16} />
                           </button>
                         )}

@@ -346,20 +346,29 @@ export const usePipelineStore = create<PipelineState>((set, get) => ({
         case 'filter_rows': {
           const filteredCount = currentData.length;
           const column = node.data.config?.column;
-          const operator = node.data.config?.operator || '>';
-          const value = parseFloat(node.data.config?.value || '0');
+          const operator = node.data.config?.operator || '==';
+          const rawValue = node.data.config?.value || '';
           
           currentData = currentData.filter((row: any) => {
-            const rowValue = parseFloat(row[column]);
-            if (isNaN(rowValue)) return false;
+            const cellValue = row[column];
+            if (cellValue === undefined || cellValue === null) return false;
+
+            // Robust string handling: trim whitespace and normalize case for string comparisons
+            const rowValueStr = String(cellValue).trim().toLowerCase();
+            const filterValueStr = String(rawValue).trim().toLowerCase();
             
+            // Handle numeric conversion for math operators
+            const rowValueNum = parseFloat(cellValue);
+            const filterValueNum = parseFloat(rawValue);
+            const isNumeric = !isNaN(rowValueNum) && !isNaN(filterValueNum);
+
             switch (operator) {
-              case '>': return rowValue > value;
-              case '<': return rowValue < value;
-              case '==': return rowValue === value;
-              case '!=': return rowValue !== value;
-              case '>=': return rowValue >= value;
-              case '<=': return rowValue <= value;
+              case '==': return rowValueStr === filterValueStr;
+              case '!=': return rowValueStr !== filterValueStr;
+              case '>': return isNumeric ? rowValueNum > filterValueNum : rowValueStr > filterValueStr;
+              case '<': return isNumeric ? rowValueNum < filterValueNum : rowValueStr < filterValueStr;
+              case '>=': return isNumeric ? rowValueNum >= filterValueNum : rowValueStr >= filterValueStr;
+              case '<=': return isNumeric ? rowValueNum <= filterValueNum : rowValueStr <= filterValueStr;
               default: return true;
             }
           });
