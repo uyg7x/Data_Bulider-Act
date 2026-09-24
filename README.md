@@ -1,103 +1,95 @@
-# Visual Data Pipeline Builder
+# 🚀 Visual Data Pipeline Builder
 
-A no-code/low-code web application that allows users to visually construct data transformation pipelines using a drag-and-drop interface.
+**Empowering everyone to process data visually. No code, no stress, just flow.**
 
-## Features
+Visual Data Pipeline Builder is a sophisticated no-code/low-code web application that transforms the complex world of data engineering into an intuitive drag-and-drop experience. Whether you are a data analyst, a business owner, or a developer, you can now construct, execute, and monitor data transformation pipelines in minutes.
 
-- **Visual Pipeline Builder**: Drag-and-drop interface to create data processing workflows
-- **Multiple Node Types**: Data sources, transformations, and output nodes
-- **Real-time Execution**: Watch your pipeline execute with live status updates
-- **Chart Generation**: Create bar, line, pie, scatter, and area charts from your data
-- **Data Preview**: Inspect data at each pipeline stage
-- **Pipeline Management**: Save, load, duplicate, and delete pipelines
-- **Execution History**: Track pipeline runs with detailed logs
+---
 
-## How to Use
+## 🌟 Why This Module? (How it helps your life)
 
-### 1. Dashboard
+Data processing usually requires writing tedious scripts, handling messy CSVs, and debugging complex SQL queries. This module removes those barriers:
 
-When you first open the application, you'll see the **Dashboard**:
+- **⏱️ Save Hours of Development**: Stop writing boilerplate code for basic filters, sorts, and joins. Build your logic visually and let the engine handle the execution.
+- **📉 Democratize Data Analysis**: Allow non-technical team members to create their own data pipelines without needing to learn Python or SQL.
+- **🔍 Immediate Feedback**: No more "run and pray." See exactly how your data transforms at every single step with integrated data previews.
+- **📊 Instant Visualization**: Turn raw data into professional charts (Bar, Line, Pie, Scatter) with a single node.
+- **🛠️ Error-Proof Workflows**: Visually map your data flow to avoid logical errors and easily iterate on your transformation logic.
 
-- **View Pipelines**: See all your saved pipelines in a grid view
-- **Create New Pipeline**: Click "New Pipeline" button to create a blank pipeline
-- **Open Pipeline**: Click on any pipeline card to open it in the Builder
-- **Pipeline Actions**: Click the three-dot menu (⋮) on each card to:
-  - Duplicate the pipeline
-  - Delete the pipeline
+---
 
-### 2. Builder (Canvas)
+## ✨ Key Features
 
-The Builder is where you construct your pipeline. It has three main sections:
+- **🎨 Visual Canvas**: A powerful drag-and-drop interface powered by React Flow.
+- **🧩 Diverse Node Library**:
+  - **Sources**: CSV uploads and Database connectors.
+  - **Transforms**: Null handling, column renaming, mathematical operations, row filtering, and sorting.
+  - **Outputs**: Professional chart generation and multi-format exports (CSV, JSON).
+- **⚡ Real-time Execution**: Monitor pipeline health and progress with live status updates and detailed execution logs.
+- **📦 Pipeline Management**: Full CRUD operations—Save, Load, Duplicate, and Organize your workflows.
+- **📈 Integrated Analytics**: A comprehensive dashboard to track pipeline health and recent activity.
 
-#### Left Sidebar - Node Palette
-Contains all available nodes organized by category:
+---
 
-**Data Sources:**
-- **Load CSV**: Load data from a CSV file
-- **Load Database**: Load data from a database query
+## 🚀 Getting Started
 
-**Transformations:**
-- **Filter Nulls**: Remove or fill null values in a column
-- **Rename Columns**: Rename data columns
-- **Math Operation**: Perform add, subtract, multiply, divide operations
-- **Filter Rows**: Filter rows based on conditions (>, <, ==, !=, >=, <=)
-- **Sort Data**: Sort data by a specific column
+### 📦 Installation
 
-**Outputs:**
-- **Generate Chart**: Create visualizations (bar, line, pie, scatter, area charts)
-- **Export CSV**: Export processed data as CSV
-- **Export JSON**: Export processed data as JSON
+Follow these steps to get your local environment up and running:
 
-#### Center Canvas
-- **Add Nodes**: 
-  - Drag nodes from the left palette onto the canvas
-  - OR click on a node in the palette to add it
-- **Connect Nodes**: 
-  - Click and drag from the right handle (output) of one node
-  - Drop on the left handle (input) of another node
-  - This creates a data flow connection
-- **Move Nodes**: Click and drag nodes to reposition them
-- **Delete Nodes**: Select a node and press Delete, or use the trash icon in the properties panel
-- **Zoom/Pan**: Use mouse wheel to zoom, click and drag on empty space to pan
+**1. Clone the repository**
+```bash
+git clone <your-repo-url>
+cd "workspace (1)"
+```
 
-#### Right Sidebar - Properties Panel
-When you select a node, this panel shows:
-- **Node Configuration**: Edit node-specific settings
-  - File names, column names, operations, etc.
-  - Toggle switches for boolean options
-  - Dropdown menus for selections
-- **Status**: Shows if the node is idle, running, successful, or has errors
-- **Data Preview**: After execution, shows the first 5 rows of output data
-- **Chart Preview**: For "Generate Chart" nodes, shows the actual chart
+**2. Install Dependencies**
+Ensure you have [Node.js](https://nodejs.org/) installed, then run:
+```bash
+npm install
+```
 
-#### Top Bar
-- **Back to Dashboard**: Click the arrow to return to the dashboard
-- **Save**: Save the current pipeline state
-- **Run Pipeline**: Execute the entire pipeline (processes all nodes in order)
+**3. Launch the Development Server**
+```bash
+npm run dev
+```
+Your application will be available at `http://localhost:5173`.
+
+### 🛠️ Backend Setup
+This project uses Python for data processing logic. Ensure you have Python installed and run the backend scripts:
+```bash
+python pipeline_backend_fixed.py
+```
+
+---
+
+## 📖 How to Use
+
+### 1. The Dashboard
+The command center of your data operations. Create new pipelines, manage existing ones, and monitor overall system health.
+
+### 2. The Builder (The Magic Happens Here)
+- **Left Sidebar**: Pick your tools (Nodes).
+- **Center Canvas**: Connect nodes by dragging handles to define the data flow.
+- **Right Sidebar**: Configure the specific settings for each node and preview the resulting data.
 
 ### 3. Execution & Logs
+Run your pipeline with one click and track every transformation in the **Execution History** tab. Get detailed timestamps and error reports if something goes wrong.
 
-Monitor your pipeline executions:
+---
 
-#### Run History Tab
-- **View Past Executions**: See all pipeline runs with status (Success/Failed/Pending/Running)
-- **Execution Details**: Click to expand and see:
-  - Execution logs with timestamps
-  - Duration of the run
-  - Output data preview (for successful runs)
-  - Download links for output files
+## 🛠️ Tech Stack
+- **Frontend**: React, TypeScript, Tailwind CSS, Vite
+- **State Management**: Zustand
+- **Visuals**: React Flow, Recharts, Framer Motion
+- **Backend**: Python (Data Processing)
+- **Utilities**: PapaParse (CSV), Lucide React (Icons)
 
-#### Live Logs Tab
-- Shows real-time log streaming during execution
-- Displays processing messages for each node
+---
 
-## Creating Your First Pipeline
+## 🤝 Contributing
+Feel free to fork this project, open issues, or submit pull requests to make the data world more visual!
 
-### Example: Load, Filter, and Export Data
-
-1. **Create a New Pipeline**
-   - Go to Dashboard
-   - Click "New Pipeline"
    - Name it "Employee Data Cleanup"
 
 2. **Add a Load CSV Node**
