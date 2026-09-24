@@ -1,4 +1,4 @@
-# 🚀 Visual Data Pipeline Builder
+#  Visual Data Pipeline Builder
 
 **Empowering everyone to process data visually. No code, no stress, just flow.**
 
@@ -6,34 +6,34 @@ Visual Data Pipeline Builder is a sophisticated no-code/low-code web application
 
 ---
 
-## 🌟 Why This Module? (How it helps your life)
+##  Why This Module? (How it helps your life)
 
 Data processing usually requires writing tedious scripts, handling messy CSVs, and debugging complex SQL queries. This module removes those barriers:
 
-- **⏱️ Save Hours of Development**: Stop writing boilerplate code for basic filters, sorts, and joins. Build your logic visually and let the engine handle the execution.
-- **📉 Democratize Data Analysis**: Allow non-technical team members to create their own data pipelines without needing to learn Python or SQL.
-- **🔍 Immediate Feedback**: No more "run and pray." See exactly how your data transforms at every single step with integrated data previews.
-- **📊 Instant Visualization**: Turn raw data into professional charts (Bar, Line, Pie, Scatter) with a single node.
-- **🛠️ Error-Proof Workflows**: Visually map your data flow to avoid logical errors and easily iterate on your transformation logic.
+- ** Save Hours of Development**: Stop writing boilerplate code for basic filters, sorts, and joins. Build your logic visually and let the engine handle the execution.
+- ** Democratize Data Analysis**: Allow non-technical team members to create their own data pipelines without needing to learn Python or SQL.
+- ** Immediate Feedback**: No more "run and pray." See exactly how your data transforms at every single step with integrated data previews.
+- ** Instant Visualization**: Turn raw data into professional charts (Bar, Line, Pie, Scatter) with a single node.
+- ** Error-Proof Workflows**: Visually map your data flow to avoid logical errors and easily iterate on your transformation logic.
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
-- **🎨 Visual Canvas**: A powerful drag-and-drop interface powered by React Flow.
-- **🧩 Diverse Node Library**:
+- ** Visual Canvas**: A powerful drag-and-drop interface powered by React Flow.
+- ** Diverse Node Library**:
   - **Sources**: CSV uploads and Database connectors.
   - **Transforms**: Null handling, column renaming, mathematical operations, row filtering, and sorting.
   - **Outputs**: Professional chart generation and multi-format exports (CSV, JSON).
-- **⚡ Real-time Execution**: Monitor pipeline health and progress with live status updates and detailed execution logs.
-- **📦 Pipeline Management**: Full CRUD operations—Save, Load, Duplicate, and Organize your workflows.
-- **📈 Integrated Analytics**: A comprehensive dashboard to track pipeline health and recent activity.
+- ** Real-time Execution**: Monitor pipeline health and progress with live status updates and detailed execution logs.
+- ** Pipeline Management**: Full CRUD operations—Save, Load, Duplicate, and Organize your workflows.
+- ** Integrated Analytics**: A comprehensive dashboard to track pipeline health and recent activity.
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
-### 📦 Installation
+###  Installation
 
 Follow these steps to get your local environment up and running:
 
@@ -55,7 +55,7 @@ npm run dev
 ```
 Your application will be available at `http://localhost:5173`.
 
-### 🛠️ Backend Setup
+###  Backend Setup
 This project uses Python for data processing logic. Ensure you have Python installed and run the backend scripts:
 ```bash
 python pipeline_backend_fixed.py
@@ -63,7 +63,7 @@ python pipeline_backend_fixed.py
 
 ---
 
-## 📖 How to Use
+##  How to Use
 
 ### 1. The Dashboard
 The command center of your data operations. Create new pipelines, manage existing ones, and monitor overall system health.
@@ -78,7 +78,7 @@ Run your pipeline with one click and track every transformation in the **Executi
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 - **Frontend**: React, TypeScript, Tailwind CSS, Vite
 - **State Management**: Zustand
 - **Visuals**: React Flow, Recharts, Framer Motion
@@ -87,7 +87,7 @@ Run your pipeline with one click and track every transformation in the **Executi
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 Feel free to fork this project, open issues, or submit pull requests to make the data world more visual!
 
    - Name it "Employee Data Cleanup"
